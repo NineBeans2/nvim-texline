@@ -1,5 +1,6 @@
 -- File: lua/nvim-texline/init.lua
 local core = require("nvim-texline.core")
+local lsp = require("nvim-texline.lsp")
 
 -- Default configuration
 local default_config = {
@@ -16,7 +17,8 @@ local default_config = {
 	-- Placeholders:
 	--   %branch% -> Output of `git_branch()`
 	--   %nav%    -> Formatted navigation text (via `nav_pattern`)
-	statusline_template = [[%#LineNr#%branch%%<%f%m%h%r%w  %nav%%= %l,%c%V %P %-3.([%{mode(1)}]%)]],
+	statusline_template = [[%#LineNr#%branch%%<%f%m%h%r%w  %nav%%= %lav% %l,%c%V %P %-3.([%{mode(1)}]%)]],
+	-- statusline_template = [[%#LineNr#%branch%%<%f%m%h%r%w  %lav%%= %l,%c%V %P %-3.([%{mode(1)}]%)]],
 }
 
 -- Merge user config with defaults
@@ -40,6 +42,8 @@ M.navic_truncated = function()
 		config.max_comp or default_config.max_comp
 	)
 end
+M.get_diagnostic_count = lsp.get_diagnostic_count
+M.lsp_diagnostics = lsp.lsp_diagnostics
 
 -- Internal function to apply the statusline
 function M._apply_statusline()
@@ -47,18 +51,14 @@ function M._apply_statusline()
 	_G.StatuslineHelper = {
 		git_branch = M.git_branch,
 		navic_truncated = M.navic_truncated,
+		lsp_diagnostics = M.lsp_diagnostics,
 	}
 
 	-- Build the final statusline string
-	local statusline = config
-		.statusline_template
+	local statusline = config.statusline_template
 		:gsub("%%branch%%", "%%{v:lua.StatuslineHelper.git_branch()}")
-		-- :gsub("%%nav%%", config.nav_pattern:format("v:lua.StatuslineHelper.navic_truncated()"))
-		:gsub(
-			"%%nav%%",
-			"%%{v:lua.StatuslineHelper.navic_truncated()}"
-		)
-
+		:gsub("%%nav%%", "%%{v:lua.StatuslineHelper.navic_truncated()}")
+		:gsub("%%lav%%", "%%{v:lua.StatuslineHelper.lsp_diagnostics()}")
 	vim.opt.statusline = statusline
 end
 
