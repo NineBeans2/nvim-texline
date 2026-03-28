@@ -52,10 +52,15 @@ end
 function M.format_client_diagnostics(show_all)
 	local now = vim.loop.now()
 	show_all = show_all or false
-
-	-- 使用缓存（500ms）
-	if now - cache.update_time < 500 and not show_all then
+	local mode = vim.api.nvim_get_mode().mode
+	-- do not update in insert mode
+	if mode:match("^[i]") then
 		return cache.client_diagnostics
+	else
+		-- use cache（1000ms）
+		if now - cache.update_time < 1000 and not show_all then
+			return cache.client_diagnostics
+		end
 	end
 
 	local client_info, diagnostics_by_ns = M.get_diagnostics_by_namespace()
