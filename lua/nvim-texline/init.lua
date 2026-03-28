@@ -27,7 +27,7 @@ local config = {}
 local M = {}
 function M.setup(user_config)
 	-- autocmd is required otherwise the tex file can be detected correctly
-	vim.api.nvim_create_autocmd("FileType", {
+	vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
 		pattern = "*", -- 匹配所有缓冲区
 		callback = function()
 			local statusline = ""
