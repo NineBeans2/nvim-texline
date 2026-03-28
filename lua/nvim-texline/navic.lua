@@ -1,20 +1,6 @@
 -- File: lua/nvim-texline/core.lua
 local M = {}
 
-local gitbranch = require("nvim-gitbranch")
-local branch_name = gitbranch.name()
-
--- function M.git_branch()
--- 	return vim.fn.exists("*gitbranch#name") == 1 and vim.fn["gitbranch#name"]() or ""
--- end
---
-function M.git_branch()
-	if branch_name then
-		return branch_name
-	end
-	return ""
-end
-
 function M.get_location_tex(max_comp)
 	local navic = require("nvim-navic")
 	local old_data = navic.get_data()
