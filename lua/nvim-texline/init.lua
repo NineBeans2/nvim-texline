@@ -40,7 +40,7 @@ function M.setup(user_config)
 			end
 			if config.setup_statusline then
 				statusline = M.formulate_statusline()
-				vim.opt.statusline = statusline
+				vim.wo.statusline = statusline
 			end
 			vim.keymap.set(
 				"n",
@@ -106,7 +106,7 @@ function M.toggle_diagnostic()
 			config.statusline_template = config.statusline_template_full
 			statusline = M.formulate_statusline()
 		end
-		vim.opt.statusline = statusline
+		vim.wo.statusline = statusline
 	end
 end
 
