@@ -30,17 +30,20 @@ function M.setup(user_config)
 	vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
 		pattern = "*", -- 匹配所有缓冲区
 		callback = function()
-			local statusline = ""
 			-- Merge user config with defaults
 			config = vim.tbl_extend("force", default_config, user_config or {})
 			-- don't show lsp diagnostics for tex file by default
 			if vim.bo.filetype == "tex" then
 				config.show_lav = false
-				config.statusline_template = config.statusline_template_nolav
 			end
+
+			-- set show_lav as window status
+			local win_id = vim.api.nvim_get_current_win()
+			vim.w[win_id].show_lav = config.show_lav
+
+			local statusline_temp = M.whether_show_lav(config.show_lav)
 			if config.setup_statusline then
-				statusline = M.formulate_statusline()
-				vim.wo.statusline = statusline
+				vim.wo.statusline = M.formulate_statusline(statusline_temp)
 			end
 			vim.keymap.set(
 				"n",
@@ -71,7 +74,7 @@ end
 M.lsp_diagnostics = lsp.lsp_diagnostics
 
 -- Internal function to apply the statusline
-function M.formulate_statusline()
+function M.formulate_statusline(template)
 	-- Create a helper function accessible to the statusline evaluation context
 	_G.StatuslineHelper = {
 		git_branch = M.git_branch,
@@ -83,7 +86,7 @@ function M.formulate_statusline()
 	}
 
 	-- Build the final statusline string
-	local statusline = config.statusline_template
+	local statusline = template
 		:gsub("%%branch%%", "%%{v:lua.StatuslineHelper.git_branch()}")
 		:gsub("%%nav%%", "%%{v:lua.StatuslineHelper.navic_truncated()}")
 		:gsub("%%lav%%", "%%{v:lua.StatuslineHelper.lsp_diagnostics()}")
@@ -95,18 +98,28 @@ function M.formulate_statusline()
 end
 
 function M.toggle_diagnostic()
-	local statusline = ""
 	if config.setup_statusline then
-		if config.show_lav then
-			config.show_lav = false
-			config.statusline_template = config.statusline_template_nolav
-			statusline = M.formulate_statusline()
-		else
-			config.show_lav = true
-			config.statusline_template = config.statusline_template_full
-			statusline = M.formulate_statusline()
+		local win_id = vim.api.nvim_get_current_win()
+		-- 获取或初始化当前窗口的显示状态
+		local win_show_lav = vim.w[win_id].show_lav
+		if win_show_lav == nil then
+			-- 如果窗口没有状态，使用全局默认值
+			win_show_lav = config.show_lav
 		end
-		vim.wo.statusline = statusline
+
+		-- 切换当前窗口的状态
+		win_show_lav = not win_show_lav
+		vim.w[win_id].show_lav = win_show_lav
+
+		local statusline_temp = M.whether_show_lav(win_show_lav)
+		vim.wo.statusline = M.formulate_statusline(statusline_temp)
+	end
+end
+function M.whether_show_lav(show_lav_test)
+	if show_lav_test then
+		return config.statusline_template_full
+	else
+		return config.statusline_template_nolav
 	end
 end
 
