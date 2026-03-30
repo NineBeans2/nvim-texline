@@ -49,17 +49,17 @@ function M.get_diagnostics_by_namespace()
 end
 
 -- 格式化客户端诊断显示
-function M.format_client_diagnostics(show_all)
+function M.format_client_diagnostics(win_id, show_all)
 	local now = vim.loop.now()
 	show_all = show_all or false
 	local mode = vim.api.nvim_get_mode().mode
 	-- do not update in insert mode
 	if mode:match("^[i]") then
-		return cache.client_diagnostics
+		return cache.client_diagnostics[win_id] -- return cache associated to each window to avoid conflict
 	else
 		-- use cache（1000ms）
 		if now - cache.update_time < 1000 and not show_all then
-			return cache.client_diagnostics
+			return cache.client_diagnostics[win_id] -- return cache associated to each window to avoid conflict
 		end
 	end
 
@@ -106,15 +106,15 @@ function M.format_client_diagnostics(show_all)
 		return a.name < b.name
 	end)
 
-	cache.client_diagnostics = formatted_clients
+	cache.client_diagnostics[win_id] = formatted_clients -- store cache associated to each window to avoid conflict
 	cache.update_time = now
 
 	return formatted_clients
 end
 
 -- 在状态栏中显示客户端诊断
-function M.statusline_format()
-	local clients = M.format_client_diagnostics()
+function M.statusline_format(win_id, show_all)
+	local clients = M.format_client_diagnostics(win_id, show_all)
 	local parts = {}
 
 	for _, client in ipairs(clients) do
@@ -153,7 +153,8 @@ function M.lsp_diagnostics()
 	if #clients == 0 then
 		return ""
 	end
-	local statusline_format = M.statusline_format()
+	local win_id = vim.api.nvim_get_current_win()
+	local statusline_format = M.statusline_format(win_id)
 	if statusline_format == "" then
 		return "✓"
 	else
