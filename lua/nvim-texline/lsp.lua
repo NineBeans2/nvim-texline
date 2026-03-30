@@ -117,10 +117,12 @@ function M.statusline_format(win_id, show_all)
 	local clients = M.format_client_diagnostics(win_id, show_all)
 	local parts = {}
 
-	for _, client in ipairs(clients) do
-		local diag_parts = client.diag_parts
-		if #diag_parts > 0 then
-			table.insert(parts, "[" .. client.name .. "]" .. ":" .. table.concat(diag_parts, ","))
+	if clients then -- avoid errors when clients is empty
+		for _, client in ipairs(clients) do
+			local diag_parts = client.diag_parts
+			if #diag_parts > 0 then
+				table.insert(parts, "[" .. client.name .. "]" .. ":" .. table.concat(diag_parts, ","))
+			end
 		end
 	end
 
